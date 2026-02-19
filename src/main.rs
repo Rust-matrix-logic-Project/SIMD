@@ -15,8 +15,10 @@ fn main() {
     println!("tensor test");
     unsafe {
          
-            let t =  create_tensor(10, 50);
-            println!("{:?}", t.data);
+            let t =  create_tensor(10, 5);
             
+            let result = tensor_calc(t, 10);
+            println!("{:?}", result.data);
+
     }
 }
