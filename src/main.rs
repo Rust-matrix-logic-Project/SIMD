@@ -28,6 +28,16 @@ fn main() {
             let t2 = create_tensor(10000, 10000);
             tesor_mul_benchmark(t1, t2);
             foo2();
+            let t1 = create_tensor(9, 5);
+            let t2 = create_tensor(5, 9);
+            let t1 = tensor_calc(t1, 541);
+            let t2 = tensor_calc(t2, 40456);
+            let dot_result= dot_tensor(t1, t2);
+            println!("dot_resulut: {:?}\n", dot_result.data);
+            let t1 = create_tensor(1000, 1000);
+            let t2 = create_tensor(1000, 1000);
+            tesor_dot_benchmark(t1, t2);
+            foo3();
         }else {
             eprintln!("avx2がCPUによってサポートされていません。");
             return;           
