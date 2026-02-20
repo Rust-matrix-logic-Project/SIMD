@@ -1,24 +1,25 @@
-//use simd::benchmark::*;
+use simd::benchmark::*;
 use simd::create_tensor::*;
+use simd::calc_tensor::*;
 fn main() {
-    /*println!("test start");
+    println!("tensor test");
     unsafe {
         if is_x86_feature_detected!("avx2"){
+            let t =  create_tensor(3, 50);
+            let result = tensor_calc(t, 179);
+            println!("{:?}", result.data);
             foo();
+            let t1 = create_tensor(9, 5);
+            let t2 = create_tensor(9, 5);
+            let t1 = tensor_calc(t1, 14);
+            let t2 = tensor_calc(t2, 784);
+            let add_result= add_tensor(t1, t2);
+            println!("{:?}", add_result.data);
         }else {
             eprintln!("avx2がCPUによってサポートされていません。");
             return;           
         }
 
-    }*/
-
-    println!("tensor test");
-    unsafe {
-         
-            let t =  create_tensor(10, 5);
-            
-            let result = tensor_calc(t, 10);
-            println!("{:?}", result.data);
 
     }
 }
