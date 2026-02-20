@@ -13,11 +13,21 @@ fn main() {
             let t1 = tensor_calc(t1, 14);
             let t2 = tensor_calc(t2, 784);
             let add_result= add_tensor(t1, t2);
-            println!("{:?}", add_result.data);
+            println!("add_resulut: {:?}\n", add_result.data);
             let t1 = create_tensor(10000, 10000);
             let t2 = create_tensor(10000, 10000);
             tesor_add_benchmark(t1, t2);
-            foo();
+            foo1();
+            let t1 = create_tensor(9, 5);
+            let t2 = create_tensor(9, 5);
+            let t1 = tensor_calc(t1, 14);
+            let t2 = tensor_calc(t2, 784);
+            let mul_result= mul_tensor_elementwise(t1, t2);
+            println!("mul_resulut: {:?}\n", mul_result.data);
+            let t1 = create_tensor(10000, 10000);
+            let t2 = create_tensor(10000, 10000);
+            tesor_mul_benchmark(t1, t2);
+            foo2();
         }else {
             eprintln!("avx2がCPUによってサポートされていません。");
             return;           
