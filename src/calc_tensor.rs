@@ -13,17 +13,17 @@ pub unsafe fn add_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     unsafe {
         let mut i = 0;
         while i + 8 <= data1 {
-            let data_ptr1 = ptr1.add(i) as *mut __m256i;
-            let data_ptr2 = ptr2.add(i) as *const __m256i;
-            let load_ptr1 = _mm256_loadu_si256(data_ptr1);
-            let load_ptr2 = _mm256_loadu_si256(data_ptr2);
+            let data_ptr1 = ptr1.add(i);
+            let data_ptr2 = ptr2.add(i);
+            let load_ptr1 = _mm256_loadu_ps(data_ptr1);
+            let load_ptr2 = _mm256_loadu_ps(data_ptr2);
 
-            let mul_result = _mm256_add_epi32(load_ptr1, load_ptr2);
+            let mul_result = _mm256_add_ps(load_ptr1, load_ptr2);
             i += 8;
-            _mm256_storeu_si256(data_ptr1, mul_result);
+            _mm256_storeu_ps(data_ptr1, mul_result);
         }
         while i < data1 {
-            *ptr1.add(i) *= *ptr2.add(i);
+            *ptr1.add(i) += *ptr2.add(i);
             i += 1;
         }
     }
@@ -42,14 +42,14 @@ pub unsafe fn mul_tensor_elementwise(mut tensor1: Tensor, tensor2: Tensor) -> Te
     unsafe {
         let mut i = 0;
         while i + 8 <= data1 {
-            let data_ptr1 = ptr1.add(i) as *mut __m256i;
-            let data_ptr2 = ptr2.add(i) as *const __m256i;
-            let load_ptr1 = _mm256_loadu_si256(data_ptr1);
-            let load_ptr2 = _mm256_loadu_si256(data_ptr2);
+            let data_ptr1 = ptr1.add(i);
+            let data_ptr2 = ptr2.add(i);
+            let load_ptr1 = _mm256_loadu_ps(data_ptr1);
+            let load_ptr2 = _mm256_loadu_ps(data_ptr2);
 
-            let add_result = _mm256_mullo_epi32(load_ptr1, load_ptr2);
+            let add_result = _mm256_mul_ps(load_ptr1, load_ptr2);
             i += 8;
-            _mm256_storeu_si256(data_ptr1, add_result);
+            _mm256_storeu_ps(data_ptr1, add_result);
         }
         while i < data1 {
             *ptr1.add(i) += *ptr2.add(i);
@@ -71,16 +71,16 @@ pub unsafe fn dot_tensor(tensor1: Tensor, tensor2: Tensor) -> Tensor{
         for i in 0..tensor1.rows     {
             for k in 0..tensor2.rows {
                 let val_a = tensor1.data[i * tensor1.cols + k];
-                let result_a = _mm256_set1_epi32(val_a);
+                let result_a = _mm256_set1_ps(val_a);
                 let mut j = 0;
                 while j + 8 <= tensor2.cols {
                     let b = tensor2.data.as_ptr().add(k * tensor2.cols + j);
                     let c = dot_result.data.as_mut_ptr().add(i * tensor2.cols + j);
-                    let load_b = _mm256_loadu_si256(b as *const __m256i);
-                    let load_c = _mm256_loadu_si256(c  as *const __m256i);
-                    let result_b = _mm256_mullo_epi32(result_a, load_b);
-                    let add_result = _mm256_add_epi32(result_b, load_c);    
-                    _mm256_storeu_si256(c as *mut __m256i, add_result);
+                    let load_b = _mm256_loadu_ps(b);
+                    let load_c = _mm256_loadu_ps(c);
+                    let result_b = _mm256_mul_ps(result_a, load_b);
+                    let add_result = _mm256_add_ps(result_b, load_c);    
+                    _mm256_storeu_ps(c, add_result);
                     
                     j += 8;
                 }
@@ -98,7 +98,7 @@ pub unsafe fn dot_tensor(tensor1: Tensor, tensor2: Tensor) -> Tensor{
 }
 
 pub fn normal_dot_tensor(tensor1: &Tensor, tensor2: &Tensor) -> Tensor {
-    let mut dot_result = unsafe { crate::create_tensor::create_tensor(tensor1.rows, tensor2.cols) };
+    let mut dot_result = unsafe { create_tensor(tensor1.rows, tensor2.cols) };
     
     for i in 0..tensor1.rows {
         for k in 0..tensor1.cols {
@@ -110,4 +110,84 @@ pub fn normal_dot_tensor(tensor1: &Tensor, tensor2: &Tensor) -> Tensor {
         }
     }
     dot_result
+}
+
+pub unsafe fn div_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
+    let data1 = tensor1.data.len();
+    let data2 = tensor2.data.len();
+    if data1 != data2 {
+        eprintln!("配列の要素が一致していません。");
+        return Tensor { rows:tensor1.rows, cols:tensor1.cols, data:tensor1.data }
+    }
+    if tensor1.data[0] == 0.0 && tensor2.data[0] == 0.0{
+        eprintln!("要素に0が含まれています。このままでは除算できません。");
+        return Tensor { rows:tensor1.rows, cols:tensor1.cols, data:tensor1.data }
+    }
+
+    let ptr1 = tensor1.data.as_mut_ptr();
+    let ptr2 = tensor2.data.as_ptr();
+    unsafe {
+        let mut i = 0;
+        while i + 8 <= data1 {
+            let data_ptr1 = ptr1.add(i);
+            let data_ptr2 = ptr2.add(i);
+            let load_ptr1 = _mm256_loadu_ps(data_ptr1);
+            let load_ptr2 = _mm256_loadu_ps(data_ptr2);
+
+            let div_result = _mm256_div_ps(load_ptr1, load_ptr2);
+
+            i += 8;
+            _mm256_storeu_ps(data_ptr1, div_result);
+        }
+        while i < data1 {
+            *ptr1.add(i) /= *ptr2.add(i);
+            i += 1;
+        }
+    }
+    tensor1
+}
+
+pub fn normal_div(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
+    let len = tensor1.data.len();
+    for i in 0..len {
+        tensor1.data[i] /= tensor2.data[i];
+    }
+    tensor1
+}
+
+pub unsafe fn sub_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
+    let data1 = tensor1.data.len();
+    let data2 = tensor2.data.len();
+    if data1 != data2 {
+        eprintln!("配列の要素が一致していません。");
+        return Tensor { rows:tensor1.rows, cols:tensor1.cols, data:tensor1.data }
+    }
+    let ptr1 = tensor1.data.as_mut_ptr();
+    let ptr2 = tensor2.data.as_ptr();
+    unsafe {
+        let mut i = 0;
+        while i + 8 <= data1 {
+            let data_ptr1 = ptr1.add(i);
+            let data_ptr2 = ptr2.add(i);
+            let load_ptr1 = _mm256_loadu_ps(data_ptr1);
+            let load_ptr2 = _mm256_loadu_ps(data_ptr2);
+
+            let sub_result = _mm256_sub_ps(load_ptr1, load_ptr2);
+            i += 8;
+            _mm256_storeu_ps(data_ptr1, sub_result);
+        }
+        while i < data1 {
+            *ptr1.add(i) -= *ptr2.add(i);
+            i += 1;
+        }
+    }
+    tensor1
+}
+
+pub fn normal_sub(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
+    let len = tensor1.data.len();
+    for i in 0..len {
+        tensor1.data[i] -= tensor2.data[i];
+    }
+    tensor1
 }

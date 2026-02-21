@@ -4,7 +4,7 @@ pub mod calc_tensor;
 
 #[repr(align(32))]
 pub struct Tensor{
-   pub  rows: usize,
+   pub rows: usize,
    pub cols: usize,
-   pub data: Vec<i32>
+   pub data: Vec<f32>
 }
