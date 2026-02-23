@@ -191,3 +191,77 @@ pub fn normal_sub(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     }
     tensor1
 }
+
+pub fn add_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+    if tensor1.cols != tensor2.cols{
+        eprintln!("列数が一致せずブロードキャストを行えません。");
+        return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
+    }
+    let ptr1 = tensor1.data.as_mut_ptr();
+    let ptr2 = tensor2.data.as_ptr();
+    unsafe {
+        for i in 0..tensor1.rows {
+            for j in 0..tensor1.cols {
+                let val_b = *ptr2.add(j);
+                *ptr1.add(i * tensor1.cols + j) += val_b;
+        }
+    }
+}
+    tensor1
+}
+
+pub fn mul_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+    if tensor1.cols != tensor2.cols{
+        eprintln!("列数が一致せずブロードキャストを行えません。");
+        return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
+    }
+    let ptr1 = tensor1.data.as_mut_ptr();
+    let ptr2 = tensor2.data.as_ptr();
+    unsafe {
+        for i in 0..tensor1.rows {
+            for j in 0..tensor1.cols {
+                let val_b = *ptr2.add(j);
+                *ptr1.add(i * tensor1.cols + j) *= val_b;
+        }
+    }
+}
+    tensor1
+}
+
+
+pub fn sub_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+    if tensor1.cols != tensor2.cols{
+        eprintln!("列数が一致せずブロードキャストを行えません。");
+        return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
+    }
+    let ptr1 = tensor1.data.as_mut_ptr();
+    let ptr2 = tensor2.data.as_ptr();
+    unsafe {
+        for i in 0..tensor1.rows {
+            for j in 0..tensor1.cols {
+                let val_b = *ptr2.add(j);
+                *ptr1.add(i * tensor1.cols + j) -= val_b;
+        }
+    }
+}
+    tensor1
+}
+
+
+pub fn div_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+    if tensor1.cols != tensor2.cols{
+        eprintln!("列数が一致せずブロードキャストを行えません。");
+        return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
+    }
+    let ptr1 = tensor1.data.as_mut_ptr();
+    let ptr2 = tensor2.data.as_ptr();
+    unsafe {
+        for i in 0..tensor1.rows {
+            for j in 0..tensor1.cols {
+                let val_b = *ptr2.add(j);
+                *ptr1.add(i * tensor1.cols + j) /= val_b;
+        }
+    }
+}
+    tensor1
+}
