@@ -295,21 +295,13 @@ pub  unsafe fn tesor_sub_benchmark(tensor1: Tensor, tensor2: Tensor){
 
 #[cfg(all(target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
-pub unsafe fn foo6(){
+pub unsafe fn foo6(tensor1: Tensor, tensor2: Tensor){
 
    let nanos = {
         let start_time = Instant::now();
-        use crate::create_tensor::create_tensor;
-        use crate::calc_tensor::add_tensor;
         unsafe {
 
-        let a = create_tensor(1000, 1000);
-        let b = create_tensor(1000, 1000);
-        let res1 = add_tensor(a, b);
-        let a = create_tensor(1000, 1000);
-        let b = create_tensor(1000, 1000);
-        let res2 = add_tensor(a, b);
-        let res1 = add_cast(res1, res2);
+        let res1 = add_cast(tensor1, tensor2);
 
         black_box(res1);
         
@@ -328,21 +320,15 @@ pub unsafe fn foo6(){
 
 }
 
-pub unsafe fn foo7(){
+pub unsafe fn foo7(tensor1: Tensor,tensor2: Tensor){
 
    let nanos = {
+        use crate::calc_tensor::mul_cast;
         let start_time = Instant::now();
-        use crate::create_tensor::create_tensor;
-        use crate::calc_tensor::mul_tensor_elementwise;
+        
         unsafe {
-
-        let a = create_tensor(1000, 1000);
-        let b = create_tensor(1000, 1000);
-        let res1 = mul_tensor_elementwise(a, b);
-        let a = create_tensor(1000, 1000);
-        let b = create_tensor(1000, 1000);
-        let res2 = mul_tensor_elementwise(a, b);
-        let res1 = add_cast(res1, res2);
+        
+        let res1 = mul_cast(tensor1, tensor2);
 
         black_box(res1);
         

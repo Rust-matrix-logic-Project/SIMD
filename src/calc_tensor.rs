@@ -192,7 +192,7 @@ pub fn normal_sub(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     tensor1
 }
 
-pub fn add_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+pub unsafe  fn add_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     if tensor1.cols != tensor2.cols{
         eprintln!("列数が一致せずブロードキャストを行えません。");
         return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
@@ -201,16 +201,23 @@ pub fn add_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         for i in 0..tensor1.rows {
-            for j in 0..tensor1.cols {
-                let val_b = *ptr2.add(j);
-                *ptr1.add(i * tensor1.cols + j) += val_b;
+            let mut j = 0;
+            while j + 8 <= tensor1.cols {
+                let result_ptr1 =  _mm256_loadu_ps(ptr1.add(i * tensor1.cols + j));
+                let result_ptr2 = _mm256_loadu_ps(ptr2.add(j));
+                let result = _mm256_add_ps(result_ptr1, result_ptr2);
+                _mm256_storeu_ps(ptr1.add(i * tensor1.cols + j), result);
+                j += 8;
+        }
+        while j  < tensor1.cols {
+            *ptr1.add(i * tensor1.cols + j) += *ptr2.add(j);
         }
     }
 }
     tensor1
 }
 
-pub fn mul_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+pub unsafe  fn mul_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     if tensor1.cols != tensor2.cols{
         eprintln!("列数が一致せずブロードキャストを行えません。");
         return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
