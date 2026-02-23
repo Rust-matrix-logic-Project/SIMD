@@ -7,8 +7,9 @@ use std::io::Write;
 
 #[cfg(all(target_arch = "x86_64"))]
 use crate::Tensor;
+use crate::{calc_tensor::{div_cast, sub_cast}, create_tensor::tensor_calc};
 #[cfg(all(target_arch = "x86_64"))]
-use crate::calc_tensor::normal_div;
+use crate::calc_tensor::{add_cast, normal_div};
 
 #[cfg(all(target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
@@ -290,4 +291,143 @@ pub  unsafe fn tesor_sub_benchmark(tensor1: Tensor, tensor2: Tensor){
         sub_header.write_all(b"method, result\n").expect("書き込みに失敗しました。");
     }
     sub_file.write_all(sub_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
+}
+
+#[cfg(all(target_arch = "x86_64"))]
+#[target_feature(enable = "avx2")]
+pub unsafe fn foo6(){
+
+   let nanos = {
+        let start_time = Instant::now();
+        use crate::create_tensor::create_tensor;
+        use crate::calc_tensor::add_tensor;
+        unsafe {
+
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let res1 = add_tensor(a, b);
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let res2 = add_tensor(a, b);
+        let res1 = add_cast(res1, res2);
+
+        black_box(res1);
+        
+        }
+        black_box(start_time.elapsed().as_nanos())
+
+    };
+    let mut  writer = OpenOptions::new();
+    let mut sub_header = writer.write(true).create(true).append(true).open("tests/add_cast_test.csv").expect("書き込み先のファイルがありません。");
+    let mut sub_file = writer.write(true).create(true).append(true).open("tests/add_cast_test.csv").expect("書き込みが正常に行われませんでした。");
+    let sub_result = format!("add_f32, {:?}\n", nanos);
+    if sub_header.metadata().expect("バイト数の読み込みに失敗しました。").len() == 0{
+        sub_header.write_all(b"method, result\n").expect("書き込みに失敗しました。");
+    }
+    sub_file.write_all(sub_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
+
+}
+
+pub unsafe fn foo7(){
+
+   let nanos = {
+        let start_time = Instant::now();
+        use crate::create_tensor::create_tensor;
+        use crate::calc_tensor::mul_tensor_elementwise;
+        unsafe {
+
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let res1 = mul_tensor_elementwise(a, b);
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let res2 = mul_tensor_elementwise(a, b);
+        let res1 = add_cast(res1, res2);
+
+        black_box(res1);
+        
+        }
+        black_box(start_time.elapsed().as_nanos())
+
+    };
+    let mut  writer = OpenOptions::new();
+    let mut sub_header = writer.write(true).create(true).append(true).open("tests/mul_cast_test.csv").expect("書き込み先のファイルがありません。");
+    let mut sub_file = writer.write(true).create(true).append(true).open("tests/mul_cast_test.csv").expect("書き込みが正常に行われませんでした。");
+    let sub_result = format!("mul_f32, {:?}\n", nanos);
+    if sub_header.metadata().expect("バイト数の読み込みに失敗しました。").len() == 0{
+        sub_header.write_all(b"method, result\n").expect("書き込みに失敗しました。");
+    }
+    sub_file.write_all(sub_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
+
+}
+
+pub unsafe fn foo8(){
+
+   let nanos = {
+        let start_time = Instant::now();
+        use crate::create_tensor::create_tensor;
+        use crate::calc_tensor::sub_tensor;
+        unsafe {
+
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let res1 = sub_tensor(a, b);
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let res2 = sub_tensor(a, b);
+        let res1 = sub_cast(res1, res2);
+
+        black_box(res1);
+        
+        }
+        black_box(start_time.elapsed().as_nanos())
+
+    };
+    let mut  writer = OpenOptions::new();
+    let mut sub_header = writer.write(true).create(true).append(true).open("tests/sub_cast_test.csv").expect("書き込み先のファイルがありません。");
+    let mut sub_file = writer.write(true).create(true).append(true).open("tests/sub_cast_test.csv").expect("書き込みが正常に行われませんでした。");
+    let sub_result = format!("sub_f32, {:?}\n", nanos);
+    if sub_header.metadata().expect("バイト数の読み込みに失敗しました。").len() == 0{
+        sub_header.write_all(b"method, result\n").expect("書き込みに失敗しました。");
+    }
+    sub_file.write_all(sub_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
+
+}
+
+
+pub unsafe fn foo9(){
+
+   let nanos = {
+        let start_time = Instant::now();
+        use crate::create_tensor::create_tensor;
+        use crate::calc_tensor::div_tensor;
+        unsafe {
+
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let a = tensor_calc(a, 5.0);
+        let b = tensor_calc(b, 5.0);
+        let res1 = div_tensor(a, b);
+        let a = create_tensor(1000, 1000);
+        let b = create_tensor(1000, 1000);
+        let a = tensor_calc(a, 5.0);
+        let b = tensor_calc(b, 5.0);
+        let res2 = div_tensor(a, b);
+        let res1 = div_cast(res1, res2);
+
+        black_box(res1);
+        
+        }
+        black_box(start_time.elapsed().as_nanos())
+
+    };
+    let mut  writer = OpenOptions::new();
+    let mut sub_header = writer.write(true).create(true).append(true).open("tests/div_cast_test.csv").expect("書き込み先のファイルがありません。");
+    let mut sub_file = writer.write(true).create(true).append(true).open("tests/div_cast_test.csv").expect("書き込みが正常に行われませんでした。");
+    let sub_result = format!("div_f32, {:?}\n", nanos);
+    if sub_header.metadata().expect("バイト数の読み込みに失敗しました。").len() == 0{
+        sub_header.write_all(b"method, result\n").expect("書き込みに失敗しました。");
+    }
+    sub_file.write_all(sub_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
+
 }
