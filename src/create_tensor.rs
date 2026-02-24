@@ -19,7 +19,7 @@ pub unsafe fn tensor_calc(mut data1:Tensor, data2: f32) -> Tensor{
     let x = data1.data.as_mut_ptr();
     let len = data1.data.len();
     if len < 8 {
-        eprint!("配列の要素が不足しています。");
+        eprintln!("配列の要素が不足しています。");
         return Tensor { rows:data1.rows, cols:data1.cols, data:data1.data };
     }
         unsafe {

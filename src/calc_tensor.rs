@@ -12,14 +12,14 @@ pub unsafe fn add_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         let mut i = 0;
-        while i + 8 <= data1 {
+        while i + 32 <= data1 {
             let data_ptr1 = ptr1.add(i);
             let data_ptr2 = ptr2.add(i);
             let load_ptr1 = _mm256_loadu_ps(data_ptr1);
             let load_ptr2 = _mm256_loadu_ps(data_ptr2);
 
             let mul_result = _mm256_add_ps(load_ptr1, load_ptr2);
-            i += 8;
+            i += 32;
             _mm256_storeu_ps(data_ptr1, mul_result);
         }
         while i < data1 {
@@ -41,14 +41,14 @@ pub unsafe fn mul_tensor_elementwise(mut tensor1: Tensor, tensor2: Tensor) -> Te
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         let mut i = 0;
-        while i + 8 <= data1 {
+        while i + 32 <= data1 {
             let data_ptr1 = ptr1.add(i);
             let data_ptr2 = ptr2.add(i);
             let load_ptr1 = _mm256_loadu_ps(data_ptr1);
             let load_ptr2 = _mm256_loadu_ps(data_ptr2);
 
             let add_result = _mm256_mul_ps(load_ptr1, load_ptr2);
-            i += 8;
+            i += 32;
             _mm256_storeu_ps(data_ptr1, add_result);
         }
         while i < data1 {
@@ -73,7 +73,7 @@ pub unsafe fn dot_tensor(tensor1: Tensor, tensor2: Tensor) -> Tensor{
                 let val_a = tensor1.data[i * tensor1.cols + k];
                 let result_a = _mm256_set1_ps(val_a);
                 let mut j = 0;
-                while j + 8 <= tensor2.cols {
+                while j + 32 <= tensor2.cols {
                     let b = tensor2.data.as_ptr().add(k * tensor2.cols + j);
                     let c = dot_result.data.as_mut_ptr().add(i * tensor2.cols + j);
                     let load_b = _mm256_loadu_ps(b);
@@ -82,7 +82,7 @@ pub unsafe fn dot_tensor(tensor1: Tensor, tensor2: Tensor) -> Tensor{
                     let add_result = _mm256_add_ps(result_b, load_c);    
                     _mm256_storeu_ps(c, add_result);
                     
-                    j += 8;
+                    j += 32;
                 }
                 while j < tensor2.cols {
                     let val_b = tensor2.data[k * tensor1.cols + j];
@@ -128,7 +128,7 @@ pub unsafe fn div_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         let mut i = 0;
-        while i + 8 <= data1 {
+        while i + 32 <= data1 {
             let data_ptr1 = ptr1.add(i);
             let data_ptr2 = ptr2.add(i);
             let load_ptr1 = _mm256_loadu_ps(data_ptr1);
@@ -136,7 +136,7 @@ pub unsafe fn div_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
 
             let div_result = _mm256_div_ps(load_ptr1, load_ptr2);
 
-            i += 8;
+            i += 32;
             _mm256_storeu_ps(data_ptr1, div_result);
         }
         while i < data1 {
@@ -166,14 +166,14 @@ pub unsafe fn sub_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         let mut i = 0;
-        while i + 8 <= data1 {
+        while i + 32 <= data1 {
             let data_ptr1 = ptr1.add(i);
             let data_ptr2 = ptr2.add(i);
             let load_ptr1 = _mm256_loadu_ps(data_ptr1);
             let load_ptr2 = _mm256_loadu_ps(data_ptr2);
 
             let sub_result = _mm256_sub_ps(load_ptr1, load_ptr2);
-            i += 8;
+            i += 32;
             _mm256_storeu_ps(data_ptr1, sub_result);
         }
         while i < data1 {
@@ -192,6 +192,7 @@ pub fn normal_sub(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     tensor1
 }
 
+///cast
 pub unsafe  fn add_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     if tensor1.cols != tensor2.cols{
         eprintln!("列数が一致せずブロードキャストを行えません。");
@@ -211,6 +212,7 @@ pub unsafe  fn add_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
         }
         while j  < tensor1.cols {
             *ptr1.add(i * tensor1.cols + j) += *ptr2.add(j);
+            j += 1;
         }
     }
 }
@@ -226,9 +228,17 @@ pub unsafe  fn mul_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         for i in 0..tensor1.rows {
-            for j in 0..tensor1.cols {
-                let val_b = *ptr2.add(j);
-                *ptr1.add(i * tensor1.cols + j) *= val_b;
+            let mut j = 0;
+            while j + 8 <= tensor1.cols {
+                let result_ptr1 =  _mm256_loadu_ps(ptr1.add(i * tensor1.cols + j));
+                let result_ptr2 = _mm256_loadu_ps(ptr2.add(j));
+                let result = _mm256_mul_ps(result_ptr1, result_ptr2);
+                _mm256_storeu_ps(ptr1.add(i * tensor1.cols + j), result);
+                j += 8;
+        }
+        while j  < tensor1.cols {
+            *ptr1.add(i * tensor1.cols + j) *= *ptr2.add(j);
+            j += 1;
         }
     }
 }
@@ -236,7 +246,7 @@ pub unsafe  fn mul_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
 }
 
 
-pub fn sub_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+pub unsafe  fn sub_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     if tensor1.cols != tensor2.cols{
         eprintln!("列数が一致せずブロードキャストを行えません。");
         return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
@@ -245,9 +255,17 @@ pub fn sub_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         for i in 0..tensor1.rows {
-            for j in 0..tensor1.cols {
-                let val_b = *ptr2.add(j);
-                *ptr1.add(i * tensor1.cols + j) -= val_b;
+            let mut j = 0;
+            while j + 8 <= tensor1.cols {
+                let result_ptr1 =  _mm256_loadu_ps(ptr1.add(i * tensor1.cols + j));
+                let result_ptr2 = _mm256_loadu_ps(ptr2.add(j));
+                let result = _mm256_sub_ps(result_ptr1, result_ptr2);
+                _mm256_storeu_ps(ptr1.add(i * tensor1.cols + j), result);
+                j += 8;
+        }
+        while j  < tensor1.cols {
+            *ptr1.add(i * tensor1.cols + j) -= *ptr2.add(j);
+            j += 1;
         }
     }
 }
@@ -255,7 +273,7 @@ pub fn sub_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
 }
 
 
-pub fn div_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
+pub unsafe  fn div_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     if tensor1.cols != tensor2.cols{
         eprintln!("列数が一致せずブロードキャストを行えません。");
         return Tensor { rows: tensor1.rows, cols: tensor1.cols, data: tensor1.data };
@@ -264,9 +282,17 @@ pub fn div_cast(mut tensor1: Tensor, tensor2: Tensor)-> Tensor {
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         for i in 0..tensor1.rows {
-            for j in 0..tensor1.cols {
-                let val_b = *ptr2.add(j);
-                *ptr1.add(i * tensor1.cols + j) /= val_b;
+            let mut j = 0;
+            while j + 8 <= tensor1.cols {
+                let result_ptr1 =  _mm256_loadu_ps(ptr1.add(i * tensor1.cols + j));
+                let result_ptr2 = _mm256_loadu_ps(ptr2.add(j));
+                let result = _mm256_div_ps(result_ptr1, result_ptr2);
+                _mm256_storeu_ps(ptr1.add(i * tensor1.cols + j), result);
+                j += 8;
+        }
+        while j  < tensor1.cols {
+            *ptr1.add(i * tensor1.cols + j) /= *ptr2.add(j);
+            j += 1;
         }
     }
 }
