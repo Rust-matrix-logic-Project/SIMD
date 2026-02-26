@@ -12,15 +12,26 @@ pub unsafe fn add_tensor(mut tensor1: Tensor, tensor2: Tensor) -> Tensor{
     let ptr2 = tensor2.data.as_ptr();
     unsafe {
         let mut i = 0;
-        while i + 256 <= data1 {
-            let data_ptr1 = ptr1.add(i);
-            let data_ptr2 = ptr2.add(i);
-            let load_ptr1 = _mm256_loadu_ps(data_ptr1);
-            let load_ptr2 = _mm256_loadu_ps(data_ptr2);
+        while i + 32 <= data1 {
+            let load_ptr1_8 = _mm256_load_ps(ptr1.add(i + 0));
+            let load_ptr1_16 = _mm256_load_ps(ptr1.add(i + 8));
+            let load_ptr1_24 = _mm256_load_ps(ptr1.add(i + 16));
+            let load_ptr1_32 = _mm256_load_ps(ptr1.add(i + 24));
+            let load_ptr2_8 = _mm256_load_ps(ptr2.add(i + 0));
+            let load_ptr2_16 = _mm256_load_ps(ptr2.add(i + 8));
+            let load_ptr2_24 = _mm256_load_ps(ptr2.add(i + 16));
+            let load_ptr2_32 = _mm256_load_ps(ptr2.add(i + 24));
 
-            let mul_result = _mm256_add_ps(load_ptr1, load_ptr2);
-            i += 256;
-            _mm256_storeu_ps(data_ptr1, mul_result);
+            let add_result_8 = _mm256_add_ps(load_ptr1_8, load_ptr2_8);
+            _mm256_store_ps(ptr1.add(i + 0), add_result_8);
+            let add_result_16 = _mm256_add_ps(load_ptr1_16, load_ptr2_16);
+            _mm256_store_ps(ptr1.add(i + 8), add_result_16);
+            let add_result_24 = _mm256_add_ps(load_ptr1_24, load_ptr2_24);
+            _mm256_store_ps(ptr1.add(i + 16), add_result_24);
+            let add_result_32 = _mm256_add_ps(load_ptr1_32, load_ptr2_32);
+            _mm256_store_ps(ptr1.add(i + 24), add_result_32);
+
+            i += 32;
         }
         while i < data1 {
             *ptr1.add(i) += *ptr2.add(i);

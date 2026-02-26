@@ -2,17 +2,22 @@ use core::arch::x86_64::*;
 use crate::Tensor;
 
 pub unsafe fn create_tensor(rows: usize, cols: usize) -> Tensor{
-
+    unsafe {
     let size: usize = rows * cols;
-    let buf = vec![0f32; size];
-
+    let buf = std::alloc::Layout::from_size_align(size * 4, 32).unwrap();
+    let buf_ptr = std::alloc::alloc_zeroed(buf)as *mut f32;
+    if buf_ptr.is_null(){
+        eprintln!("値がnullで汚染されています。");
+    }
+    let buf = std::vec::Vec::from_raw_parts(buf_ptr, size, size);
     Tensor{
         rows: rows,
         cols: cols,
         data: buf
     }
-
 }
+}
+
 #[cfg(all(target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
 pub unsafe fn tensor_calc(mut data1:Tensor, data2: f32) -> Tensor{
