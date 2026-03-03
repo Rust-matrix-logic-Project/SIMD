@@ -1,4 +1,4 @@
-use crate::create_tensor::*;
+use crate::{Tensor, create_tensor::*};
 use std::fs::File;
 use std::io::Write;
 pub unsafe fn test_conf(){
@@ -11,5 +11,9 @@ pub unsafe fn test_conf(){
             let _ = writeln!(file, "{:?}", index);
         }
     }
-    
+}
+pub unsafe fn test_align(){
+    println!("アライメント確認");
+    let test_align = std::mem::align_of::<Tensor>();
+    println!("{}", test_align);
 }
