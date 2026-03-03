@@ -1,0 +1,15 @@
+use crate::create_tensor::*;
+use std::fs::File;
+use std::io::Write;
+pub unsafe fn test_conf(){
+    unsafe {
+        let test_a = create_tensor(1000, 1000);
+        let test_a = tensor_calc(test_a, 10.5);
+        let mut file = File::create("address/test.txt").expect("書き込みに失敗");
+        for i in 0..test_a.data.len(){
+            let index = test_a.data.as_ptr().add(i);
+            let _ = writeln!(file, "{:?}", index);
+        }
+    }
+    
+}

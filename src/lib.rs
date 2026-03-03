@@ -1,7 +1,7 @@
 pub mod benchmark;
 pub mod create_tensor;
 pub mod calc_tensor;
-
+pub mod conf;
 #[repr(align(32))]
 pub struct Tensor{
    pub rows: usize,
