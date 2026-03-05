@@ -2,6 +2,7 @@
 name = "simd"
 version = "0.1.0"
 edition = "2024"
-
+[toolchain]
+channel = "nightly"
 [dependencies]
 [simd]

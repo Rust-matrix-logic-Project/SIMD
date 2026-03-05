@@ -1,6 +1,7 @@
 use crate::{Tensor, create_tensor::*};
 use std::fs::File;
 use std::io::Write;
+
 pub unsafe fn test_conf(){
     unsafe {
         let test_a = create_tensor(1000, 1000);
@@ -16,4 +17,17 @@ pub unsafe fn test_align(){
     println!("アライメント確認");
     let test_align = std::mem::align_of::<Tensor>();
     println!("{}", test_align);
+}
+
+pub unsafe fn test_aligment(){
+    println!("手動配置学習");
+    unsafe{
+        let test_align = create_tensor(100, 100).set_f16(10, 32);
+        println!("{:?}", test_align);
+        let a = test_align.add(1);
+        println!("{:?}", a);
+        test_align.write(1.5);
+        println!("{}",test_align.read());
+    }
+    
 }
