@@ -400,3 +400,54 @@ pub unsafe fn foo9(tensor1: Tensor,tensor2: Tensor){
     sub_file.write_all(sub_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
 
 }
+
+pub fn faer_test(){
+    use faer::Mat;
+    use faer::zip;
+    let nanos = {
+        
+        let mut a = Mat::<f32>::zeros(10000, 10000);
+        let mut b = Mat::<f32>::zeros(10000, 10000);
+        a[(0, 0)] = 1.0;
+        b[(0, 0)] = 5.0;
+        let start = Instant::now();
+        let result = zip!(&mut a, &b).for_each(|faer::unzip!(dst, src)| {*dst += *src;});
+        black_box(result);
+        black_box(start.elapsed().as_nanos())
+    };
+    let mut  writer = OpenOptions::new();
+    let mut sub_header = writer.write(true).create(true).append(true).open("benchmarks/faer_test.csv").expect("書き込み先のファイルがありません。");
+    let mut sub_file = writer.write(true).create(true).append(true).open("benchmarks/faer_test.csv").expect("書き込みが正常に行われませんでした。");
+    let add_result = format!("addf32, {:?}\n", nanos);
+    if sub_header.metadata().expect("バイト数の読み込みに失敗しました。").len() == 0{
+        sub_header.write_all(b"method, result\n").expect("書き込みに失敗しました。");
+    }
+    sub_file.write_all(add_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
+}
+
+
+#[cfg(all(target_arch = "x86_64"))]
+#[target_feature(enable = "avx2")]
+pub  unsafe fn add_benchmark(tensor1: Tensor, tensor2: Tensor){
+
+    let len1 = tensor1.data.len();
+    let len2 = tensor2.data.len();
+    if len1 != len2 {
+        eprintln!("配列の要素が一致しません。");
+    }
+    let start_time = Instant::now();
+    let result =  { 
+        let result: Tensor = tensor1 + tensor2;
+        black_box(result);
+        black_box(start_time.elapsed().as_nanos())
+    };
+    
+    let mut  writer = OpenOptions::new();
+    let mut add_header = writer.write(true).create(true).append(true).open("benchmarks/add_test.csv").expect("書き込み先のファイルがありません。");
+    let mut add_file = writer.write(true).create(true).append(true).open("benchmarks/add_test.csv").expect("書き込みが正常に行われませんでした。");
+    let add_result = format!("add_tensor, {}\n", result);
+    if add_header.metadata().expect("バイト数の読み込みに失敗しました。").len() == 0{
+        add_header.write_all(b"method, result\n").expect("書き込みに失敗しました。");
+    }
+    add_file.write_all(add_result.as_bytes()).expect("ファイルへの書き込みに失敗しました。");
+}

@@ -5,4 +5,5 @@ edition = "2024"
 [toolchain]
 channel = "nightly"
 [dependencies]
+faer = "0.24.0"
 [simd]

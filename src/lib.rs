@@ -4,6 +4,7 @@ pub mod benchmark;
 pub mod create_tensor;
 pub mod calc_tensor;
 pub mod conf;
+use std::ops::Add;
 #[repr(align(32))]
 pub struct Tensor{
 pub rows: usize,
@@ -19,5 +20,16 @@ impl Tensor {
             ptr
         }
         
+    }
+}
+impl Add for Tensor {
+    type Output = Tensor;
+    fn add(mut self, point: Tensor) -> Tensor {
+        if self.data.len() != point.data.len(){
+            eprintln!("配列の要素が一致していません。");
+        }   
+        self.data.iter_mut().zip(point.data.iter())
+        .for_each(|(a, b)| *a += b);
+        self
     }
 }
